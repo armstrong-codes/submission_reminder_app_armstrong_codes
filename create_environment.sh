@@ -1,45 +1,23 @@
 #!/bin/bash
 
-# Ask for the user's name
-echo "Please enter your name:"
-read userName
+# Prompt user for their name
+echo -n "Enter your name: "
+read user_name
 
-# Create the main directory
-mainDir="submission_reminder_$userName"
-mkdir -p "$mainDir"
+# Set up the base directory with the user's name
+base_dir="submission_reminder_${user_name}"
 
-# Create subdirectories
-mkdir -p "$mainDir/app"
-mkdir -p "$mainDir/modules"
-mkdir -p "$mainDir/assets"
-mkdir -p "$mainDir/config"
+# Create the directory structure
+echo "Creating directory structure..."
+mkdir -p "$base_dir/app"
+mkdir -p "$base_dir/config"
+mkdir -p "$base_dir/modules"
+mkdir -p "$base_dir/assets"
 
-# Create and populate files
-# submissions.txt
-cat <<EOL > "$mainDir/assets/submissions.txt"
-istudent, assignment, submission status
-Chinemerem, Shell Navigation, not submitted
-Chiagoziem, Git, submitted
-Divine, Shell Navigation, not submitted
-Anissa, Shell Basics, submitted
-Divin, Git, submitted
-Fiona, Shell Navigation, not submitted
-Sandra, Shell Navigation, submitted
-Kendrick, Shell Navigation, not submitted
-Drake, Git, submitted
-EOL
-
-# config.env
-cat <<EOL > "$mainDir/config/config.env"
-# This is the config file
-ASSIGNMENT="Shell Navigation"
-DAYS_REMAINING=2
-EOL
-
-# reminder.sh
-cat <<EOL > "$mainDir/app/reminder.sh"
+# Create reminder.sh
+echo "Creating reminder.sh..."
+cat << 'EOF' > "$base_dir/app/reminder.sh"
 #!/bin/bash
-
 # Source environment variables and helper functions
 source ./config/config.env
 source ./modules/functions.sh
@@ -52,19 +30,18 @@ echo "Assignment: $ASSIGNMENT"
 echo "Days remaining to submit: $DAYS_REMAINING days"
 echo "--------------------------------------------"
 
-check_submissions $submissions_file
-EOL
+check_submissions "$submissions_file"
+EOF
 
-# functions.sh
-cat <<EOL > "$mainDir/modules/functions.sh"
+# Create functions.sh
+echo "Creating functions.sh..."
+cat << 'EOF' > "$base_dir/modules/functions.sh"
 #!/bin/bash
 
-# Function to read submissions file and output students who have not submitted
-function check_submissions {
+function check_submissions() {
     local submissions_file=$1
     echo "Checking submissions in $submissions_file"
 
-    # Skip the header and iterate through the lines
     while IFS=, read -r student assignment status; do
         # Remove leading and trailing whitespace
         student=$(echo "$student" | xargs)
@@ -75,43 +52,51 @@ function check_submissions {
         if [[ "$assignment" == "$ASSIGNMENT" && "$status" == "not submitted" ]]; then
             echo "Reminder: $student has not submitted the $ASSIGNMENT assignment!"
         fi
-    done < <(tail -n +2 "$submissions_file") # Skip the header
+    done < <(tail -n +2 "$submissions_file")
 }
-EOL
+EOF
 
-# startup.sh
-cat <<EOL > "$mainDir/startup.sh"
+# Create config.env
+echo "Creating config.env..."
+cat << 'EOF' > "$base_dir/config/config.env"
+ASSIGNMENT="Shell Navigation"
+DAYS_REMAINING=2
+EOF
+
+# Create submissions.txt
+echo "Creating submissions.txt and adding student records..."
+echo "student,assignment,submission status" > "$base_dir/assets/submissions.txt"
+cat << 'EOF' >> "$base_dir/assets/submissions.txt"
+Chinemerem,Shell Navigation,not submitted
+Chiagoziem,Git,submitted
+Divine,Shell Navigation,not submitted
+Anissa,Shell Basics,submitted
+Noah,Shell Navigation,not submitted
+Moana,Shell Navigation,not submitted
+Denzo,Shell Navigation,submitted
+Eric,Shell Navigation,not submitted
+Micah,Shell Navigation,submitted
+Olga,Shell Navigation,not submitted
+Ken,Shell Navigation,not submitted
+Armel,Shell Navigation,submitted
+Matthew,Shell Navigation,submitted
+Hugues,Shell Navigation,not submitted
+Udochukwu,Git,not submitted
+EOF
+
+# Create startup.sh
+echo "Creating startup.sh..."
+cat << 'EOF' > "$base_dir/startup.sh"
 #!/bin/bash
 
-# startup.sh
-# Script to start the submission reminder application
+bash ./app/reminder.sh
+EOF
+# Set permissions to make scripts executable
+chmod +x "$base_dir/app/reminder.sh"
+chmod +x "$base_dir/modules/functions.sh"
+chmod +x "$base_dir/startup.sh"
 
-# Navigate to the app directory
-cd "$(dirname "$0")"
-
-# Check if the reminder.sh script exists and is executable
-if [ -x "./app/reminder.sh" ]; then
-    echo "Starting the submission reminder application..."
-    ./app/reminder.sh
-else
-    echo "Error: reminder.sh script not found or not executable."
-    exit 1
-fi
-
-# Additional logic can be added here if needed
-# For example, loading configurations or initializing modules
-
-echo "Application started successfully."
-EOL
-
-# Make scripts executable
-chmod +x "$mainDir/app/reminder.sh"
-chmod +x "$mainDir/modules/functions.sh"
-chmod +x "$mainDir/startup.sh"
-
-echo "Environment setup complete in $mainDir"
-
-# Instructions to test the application
-echo "To test the application, navigate to the directory and run the startup.sh script:"
-echo "cd $mainDir"
-echo "./startup.sh"
+echo "Environment setup is complete!"
+#In case you want to run the startup immediately while running this script, you need to remove # sign on the two lines below
+#cd "$base_dir"
+#./startup.sh
